@@ -24,58 +24,54 @@ export default class Graph {
         return false;
     }
 
-    dijkstra(startVertex, endVertex) {
-        const inf = 1000000;
+    dijkstra(startVertex) {
+        const inf = Infinity;
         const numVertices = this.numVertices();
-        let D = [];   
-        let lPrima = [];
-        let L = []; 
-        let V = [];   
-    
-        for (let i = 0; i < numVertices; i++) {
-            D.push(inf);   
-            lPrima.push(i);    
-            V.push(i);     
-        }
+        let D = new Array(numVertices).fill(inf);
+        let l_P = new Set([...this.#map.values()]);
+        let L = new Set();
     
         const start = this.#map.get(startVertex);
-        const end = this.#map.get(endVertex);
+        if (start === undefined) {
+            return null;
+        }
     
         D[start] = 0;
     
-        while (lPrima.length !== 0) {
+        while (l_P.size > 0) {
             let u = null;
             let minDistance = inf;
-    
-            for (let i = 0; i < lPrima.length; i++) {
-                if (D[lPrima[i]] < minDistance) {
-                    minDistance = D[lPrima[i]];
-                    u = lPrima[i];
+            for (let vertex of l_P) {
+                if (D[vertex] < minDistance) {
+                    minDistance = D[vertex];
+                    u = vertex;
                 }
             }
-    
             if (u === null) {
                 break;
             }
     
-            L.push(u);
-            lPrima = lPrima.filter(vertex => vertex !== u);
+            L.add(u);
+            l_P.delete(u);
     
             const neighborsLinkedList = this.#matrizAdyacencia[u];
             let current = neighborsLinkedList.head;
-    
             while (current) {
                 const neighbor = this.#map.get(current.value.node);
                 const weight = current.value.weight;
-    
-                if (lPrima.includes(neighbor) && D[u] + weight < D[neighbor]) {
+                if (l_P.has(neighbor) && D[u] + weight < D[neighbor]) {
                     D[neighbor] = D[u] + weight;
                 }
                 current = current.next;
             }
         }
     
-        return D[end];
+        const distances = {};
+        for (let [vertex, index] of this.#map) {
+            distances[vertex] = D[index];
+        }
+    
+        return distances;
     }
     
     dfs(startVertex, callback) {
@@ -88,18 +84,18 @@ export default class Graph {
         stack.push(startVertex);
 
         while (stack.length > 0) {
-            const currentVertex = stack.pop(); // Saca el ultimo vertice agregado
-            if (!visited[currentVertex]) { // Si no ha sido visitado
+            const currentVertex = stack.pop();
+            if (!visited[currentVertex]) { 
                 callback(currentVertex);
                 visited[currentVertex] = true;
                 const neighborsLinkedList = this.#matrizAdyacencia[this.#map.get(currentVertex)];
                 let current = neighborsLinkedList.head;
                 while (current) {
-                    const neighborVertex = current.value.node; // Obtiene el vecino
+                    const neighborVertex = current.value.node; 
                     if (!visited[neighborVertex]) {
-                        stack.push(neighborVertex); // Agrega el vecino a la pila si no ha sido visitado
+                        stack.push(neighborVertex); 
                     }
-                    current = current.next; // Pasa al siguiente vecino
+                    current = current.next; 
                 }
             }
         }

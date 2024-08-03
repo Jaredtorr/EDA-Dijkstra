@@ -2,11 +2,11 @@ import Graph from "../models/Graph.mjs";
 
 const graph = new Graph();
 
-const btnAgregarDestino = document.getElementById("AddRed");
-const btnAgregarConexion = document.getElementById("AddRed2");
-const btnRecorridoProfundidad = document.getElementById("profundidad");
-const btnRecorridoAnchura = document.getElementById("anchura");
-const btnRedMasRapida = document.getElementById("redMasRapida");
+const btnAgregarLugar = document.getElementById("agregarLugar");
+const btnAgregarConexion = document.getElementById("agregarConexion");
+const btnRecorridoProfundidad = document.getElementById("verProfundidad");
+const btnRecorridoAnchura = document.getElementById("verAnchura");
+const btnEncontrarRuta = document.getElementById("encontrarRuta");
 const tbodyProfundidad = document.getElementById("tbodyProfundidad");
 const tbodyAnchura = document.getElementById("tbodyAnchura");
 const tbodyDijkstra = document.getElementById("tbodyDijkstra");
@@ -16,37 +16,44 @@ function mostrarAlerta(icon, title, message) {
         icon: icon,
         title: title,
         text: message,
-        confirmButtonColor: '#007bff'
+        confirmButtonColor: '#007bff',
+        background: '#f8f9fa',
+        color: '#333',
+        iconColor: '#007bff',
+        customClass: {
+            title: 'alert-title',
+            content: 'alert-content'
+        }
     });
 }
 
-btnAgregarDestino.addEventListener("click", () => {
-    const red = document.getElementById("redes").value.trim();
+btnAgregarLugar.addEventListener("click", () => {
+    const nombreLugar = document.getElementById("nombreLugar").value.trim();
     
-    if (red !== "") {
-        if (graph.addVertex(red)) {
-            mostrarAlerta('success', 'Registro Exitoso', `Se registró la red ${red}`);
+    if (nombreLugar !== "") {
+        if (graph.addVertex(nombreLugar)) {
+            mostrarAlerta('success', 'Registro Exitoso', `Se registró el lugar ${nombreLugar}`);
         } else {
-            mostrarAlerta('error', 'Error', 'No se pudo registrar la red');
+            mostrarAlerta('error', 'Error', 'No se pudo registrar el lugar');
         }
     } else {
-        mostrarAlerta('error', 'Error', 'Debe ingresar el nombre de la red');
+        mostrarAlerta('error', 'Error', 'Debe ingresar el nombre del lugar');
     }
 });
 
 btnAgregarConexion.addEventListener("click", () => {
-    const redInicial = document.getElementById("inicial").value.trim();
-    const destino = document.getElementById("destino").value.trim();
-    const peso = parseInt(document.getElementById("peso").value);
+    const lugarInicio = document.getElementById("lugarInicio").value.trim();
+    const lugarDestino = document.getElementById("lugarDestino").value.trim();
+    const distancia = parseInt(document.getElementById("distanciaLugar").value);
 
-    if (redInicial !== "" && destino !== "" && !isNaN(peso)) {
-        if (graph.addEdge(redInicial, destino, peso)) {
+    if (lugarInicio !== "" && lugarDestino !== "" && !isNaN(distancia)) {
+        if (graph.addEdge(lugarInicio, lugarDestino, distancia)) {
             mostrarAlerta('success', 'Conexión Agregada', 'La conexión se agregó correctamente');
         } else {
             mostrarAlerta('error', 'Error', 'No se pudo agregar la conexión');
         }
     } else {
-        mostrarAlerta('error', 'Error', 'Debe ingresar ambas redes y el peso para la conexión');
+        mostrarAlerta('error', 'Error', 'Debe ingresar ambos lugares y la distancia para la conexión');
     }
 });
 
@@ -55,30 +62,17 @@ btnRecorridoProfundidad.addEventListener("click", () => {
 
     const vertices = [...graph.getVertices()];
     if (vertices.length === 0) {
-        mostrarAlerta('error', 'Error', 'No hay vértices en el grafo');
+        mostrarAlerta('error', 'Error', 'No hay lugares en el grafo');
         return;
     }
 
-    Swal.fire({
-        title: 'Ejecutando Recorrido De Profundidad',
-        text: 'Por favor espere...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+    graph.dfs(vertices[0], (vertex) => {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.textContent = vertex;
+        row.appendChild(cell);
+        tbodyProfundidad.appendChild(row);
     });
-
-    setTimeout(() => {
-        graph.dfs(vertices[0], (vertex) => {
-            const row = document.createElement('tr');
-            const cell = document.createElement('td');
-            cell.textContent = vertex;
-            row.appendChild(cell);
-            tbodyProfundidad.appendChild(row);
-        });
-
-        Swal.close();
-    }, 1000);
 });
 
 btnRecorridoAnchura.addEventListener("click", () => {
@@ -86,73 +80,43 @@ btnRecorridoAnchura.addEventListener("click", () => {
 
     const vertices = [...graph.getVertices()];
     if (vertices.length === 0) {
-        mostrarAlerta('error', 'Error', 'No hay vértices en el grafo');
+        mostrarAlerta('error', 'Error', 'No hay lugares en el grafo');
         return;
     }
 
-    Swal.fire({
-        title: 'Ejecutando Recorrido De Anchura',
-        text: 'Por favor espere...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+    graph.bfs(vertices[0], (vertex) => {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.textContent = vertex;
+        row.appendChild(cell);
+        tbodyAnchura.appendChild(row);
     });
-
-    setTimeout(() => {
-        graph.bfs(vertices[0], (vertex) => {
-            const row = document.createElement('tr');
-            const cell = document.createElement('td');
-            cell.textContent = vertex;
-            row.appendChild(cell);
-            tbodyAnchura.appendChild(row);
-        });
-
-        Swal.close();
-    }, 1000);
 });
 
-btnRedMasRapida.addEventListener("click", () => {
+btnEncontrarRuta.addEventListener("click", () => {
     tbodyDijkstra.innerHTML = '';
 
     const inicioDijkstra = document.getElementById("inicioDijkstra").value.trim();
-    const destinoDijkstra = document.getElementById("destinoDijkstra").value.trim();
 
-    if (inicioDijkstra !== "" && destinoDijkstra !== "") {
-        Swal.fire({
-            title: 'Buscando la ruta más rápida',
-            text: 'Por favor espere...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        setTimeout(() => {
-            const distance = graph.dijkstra(inicioDijkstra, destinoDijkstra);
-            if (distance !== Infinity) {
+    if (inicioDijkstra !== "") {
+        const distances = graph.dijkstra(inicioDijkstra);
+        if (distances) {
+            for (let [node, distance] of Object.entries(distances)) {
                 const row = document.createElement('tr');
+                const cellNode = document.createElement('td');
                 const cellDistance = document.createElement('td');
-                cellDistance.textContent = distance;
+                cellNode.textContent = node;
+                cellDistance.textContent = distance === Infinity ? 'Infinito' : distance;
+                row.appendChild(cellNode);
                 row.appendChild(cellDistance);
                 tbodyDijkstra.appendChild(row);
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Ruta Más Rápida',
-                    text: `La distancia más rápida entre ${inicioDijkstra} y ${destinoDijkstra} es ${distance}`,
-                    confirmButtonColor: '#007bff'
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se encontró una ruta entre las redes especificadas',
-                    confirmButtonColor: '#007bff'
-                });
             }
-        }, 1000);
+
+            mostrarAlerta('success', 'Rutas Más Cortas', `Se calcularon las distancias más cortas desde ${inicioDijkstra}`);
+        } else {
+            mostrarAlerta('error', 'Error', 'No se encontró una ruta desde el lugar especificado');
+        }
     } else {
-        mostrarAlerta('error', 'Error', 'Debe ingresar ambas redes para encontrar la ruta más rápida');
+        mostrarAlerta('error', 'Error', 'Debe ingresar el lugar de inicio para encontrar las rutas más cortas');
     }
 });
